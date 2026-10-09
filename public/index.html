@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etched Bin</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --vscode-bg: #1e1e1e;
+            --vscode-bg-hover: #2a2a2a;
+            --vscode-border: #333333;
+            --vscode-text: #cccccc;
+            --vscode-text-muted: #858585;
+            --vscode-accent: #007acc;
+            --vscode-success: #4ec9b0;
+            --vscode-warning: #ce9178;
+            
+            --md-surface: #252526;
+            --md-surface-elevated: #2d2d30;
+            --md-primary: #007acc;
+            --md-on-primary: #ffffff;
+            --md-secondary: #3b82f6;
+            --md-on-secondary: #ffffff;
+            --md-error: #f44336;
+            --md-on-error: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: var(--vscode-bg);
+            color: var(--vscode-text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        header {
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--vscode-text);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 44px;
+            height: 44px;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .subtitle {
+            color: var(--vscode-text-muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .upload-card {
+            background: var(--md-surface);
+            border: 1px solid var(--vscode-border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            transition: all 0.2s ease;
+        }
+
+        .upload-card:hover {
+            background: var(--md-surface-elevated);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--vscode-border);
+            border-radius: 8px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--vscode-accent);
+            background: rgba(0, 122, 204, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--vscode-success);
+            background: rgba(78, 201, 176, 0.1);
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .upload-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--vscode-text);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            color: var(--vscode-text-muted);
+            font-size: 14px;
+        }
+
+        .upload-hint span {
+            color: var(--vscode-accent);
+            text-decoration: underline;
+        }
+
+        .progress-container {
+            margin-top: 24px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--vscode-border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--vscode-accent);
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .progress-text {
+            color: var(--vscode-text-muted);
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .files-section {
+            background: var(--md-surface);
+            border: 1px solid var(--vscode-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--vscode-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--vscode-bg-hover);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--vscode-text);
+        }
+
+        .file-count {
+            color: var(--vscode-text-muted);
+            font-size: 12px;
+            background: var(--vscode-border);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .search-container {
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 36px 10px 14px;
+            background: var(--md-surface);
+            border: 1px solid var(--vscode-border);
+            border-radius: 8px;
+            color: var(--vscode-text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--vscode-accent);
+        }
+
+        .search-input::placeholder {
+            color: var(--vscode-text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            color: var(--vscode-text-muted);
+        }
+
+        .file-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .file-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .file-list::-webkit-scrollbar-track {
+            background: var(--vscode-bg);
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: var(--vscode-border);
+            border-radius: 4px;
+        }
+
+        .file-list::-webkit-scrollbar-thumb:hover {
+            background: var(--vscode-text-muted);
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--vscode-border);
+            transition: background 0.15s ease;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-item:hover {
+            background: var(--vscode-bg-hover);
+        }
+
+        .file-cover {
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
+            margin-right: 14px;
+            flex-shrink: 0;
+            background: var(--md-surface-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            overflow: hidden;
+        }
+
+        .file-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-cover img.pixelated {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+            margin-right: 24px;
+        }
+
+        .file-name {
+            font-size: 14px;
+            color: var(--vscode-text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .play-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(78, 201, 176, 0.2);
+            color: #4ec9b0;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .play-btn:hover {
+            background: #4ec9b0;
+            color: #000;
+        }
+
+        .play-btn.playing {
+            background: #4ec9b0;
+            color: #000;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(78, 201, 176, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 8px rgba(78, 201, 176, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(78, 201, 176, 0);
+            }
+        }
+
+        .copy-btn {
+            background: rgba(0, 122, 204, 0.15);
+            border: 1px solid rgba(0, 122, 204, 0.5);
+            color: #007acc;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .copy-btn:hover {
+            background: var(--vscode-accent);
+            border-color: var(--vscode-accent);
+            color: var(--md-on-primary);
+        }
+
+        .copy-btn.copied {
+            background: var(--vscode-success);
+            border-color: var(--vscode-success);
+            color: #000;
+        }
+
+        .delete-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover {
+            background: #f44336;
+            color: #ffffff;
+        }
+
+        .empty-state {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--vscode-text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--md-surface-elevated);
+            border: 1px solid var(--vscode-border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: var(--vscode-text);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            border-color: var(--vscode-success);
+            background: rgba(78, 201, 176, 0.1);
+        }
+
+        .toast.error {
+            border-color: var(--md-error);
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .upload-card {
+                padding: 20px;
+            }
+
+            .upload-area {
+                padding: 32px 16px;
+            }
+
+            .file-item {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .file-info {
+                width: 100%;
+            }
+
+            .copy-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><img src="/res/radio.png" alt="Logo" class="header-icon">Etched Bin</h1>
+            <p class="subtitle">自用音频存储 by Cownow</p>
+        </header>
+
+        <div class="upload-card">
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept=".mp3">
+                <div class="upload-icon">📁</div>
+                <div class="upload-title">拖拽上传 MP3 文件</div>
+                <div class="upload-hint">每次仅上传一个文件，最大 <span>10MB</span></div>
+            </div>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">上传中...</div>
+            </div>
+        </div>
+
+        <div class="files-section">
+            <div class="section-header">
+                <div class="section-title">文件列表</div>
+                <div class="file-count" id="fileCount">0 个文件</div>
+            </div>
+            <div class="search-container">
+                <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" id="searchInput" class="search-input" placeholder="搜索文件名...">
+            </div>
+            <div class="file-list" id="fileList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎵</div>
+                    <div class="empty-state-text">暂无文件，请上传您的第一个 MP3 文件</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const fileList = document.getElementById('fileList');
+        const fileCount = document.getElementById('fileCount');
+        const searchInput = document.getElementById('searchInput');
+        const toast = document.getElementById('toast');
+        
+        let allFiles = [];
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('文件大小超过 10MB 限制', 'error');
+                return;
+            }
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext !== 'mp3') {
+                showToast('仅支持 MP3 文件', 'error');
+                return;
+            }
+
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.textContent = '上传中...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    progressFill.style.width = '100%';
+                    progressText.textContent = '上传完成';
+                    showToast('文件上传成功', 'success');
+                    loadFiles();
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        progressFill.style.width = '0%';
+                        fileInput.value = '';
+                    }, 1000);
+                } else {
+                    throw new Error(result.error || '上传失败');
+                }
+            } catch (error) {
+                showToast(error.message || '上传失败', 'error');
+                progressContainer.style.display = 'none';
+                fileInput.value = '';
+            }
+        }
+
+        async function loadFiles() {
+            try {
+                const response = await fetch('/files');
+                const result = await response.json();
+                allFiles = result.files;
+                renderFileList(allFiles);
+            } catch (error) {
+                showToast('加载文件列表失败', 'error');
+            }
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.trim().toLowerCase();
+            if (!keyword) {
+                renderFileList(allFiles);
+            } else {
+                const filtered = allFiles.filter(file => 
+                    (file.originalName || file.name).toLowerCase().includes(keyword)
+                );
+                renderFileList(filtered);
+            }
+        });
+
+        function renderFileList(files) {
+            fileCount.textContent = `${files.length} 个文件`;
+
+            if (files.length === 0) {
+                const keyword = searchInput.value.trim();
+                const emptyText = keyword 
+                    ? `未找到匹配 "${keyword}" 的文件` 
+                    : '暂无文件，请上传您的第一个 MP3 文件';
+                fileList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎵</div>
+                        <div class="empty-state-text">${emptyText}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            fileList.innerHTML = files.map(file => {
+            const pixelatedClass = file.hasCustomCover ? '' : 'pixelated';
+            const coverHtml = `<img src="${escapeHtml(file.coverUrl)}" alt="封面" class="${pixelatedClass}" />`;
+            return `
+                <div class="file-item">
+                    <div class="file-cover">${coverHtml}</div>
+                    <div class="file-info">
+                        <div class="file-name">${escapeHtml(file.originalName || file.name.replace(/\.[^/.]+$/, ''))}</div>
+                    </div>
+                    <button class="play-btn" onclick="togglePlay('${escapeHtml(file.url)}', this)" title="试听"><i class="fa-solid fa-play"></i></button>
+                    <button class="copy-btn" onclick="copyLink('${escapeHtml(file.url)}')">
+                        <span><i class="fa-solid fa-copy"></i></span>
+                        <span>复制直链</span>
+                    </button>
+                    <button class="delete-btn" onclick="deleteFile('${escapeHtml(file.name)}')" title="删除文件"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+        }).join('');
+        }
+
+        window.copyLink = async function(url) {
+            const fullUrl = window.location.origin + url;
+            try {
+                await navigator.clipboard.writeText(fullUrl);
+                showToast('直链已复制到剪贴板', 'success');
+            } catch (error) {
+                const textarea = document.createElement('textarea');
+                textarea.value = fullUrl;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('直链已复制到剪贴板', 'success');
+            }
+        }
+
+        let audioPlayer = null;
+        let currentPlayBtn = null;
+        let playTimeout = null;
+
+        window.togglePlay = function(url, btn) {
+            const fullUrl = window.location.origin + url;
+
+            if (audioPlayer && audioPlayer.src === fullUrl && !audioPlayer.paused) {
+                fadeOutAndStop();
+                return;
+            }
+
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer = null;
+            }
+
+            if (currentPlayBtn && currentPlayBtn !== btn) {
+                currentPlayBtn.classList.remove('playing');
+                currentPlayBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            }
+
+            audioPlayer = new Audio(fullUrl);
+            audioPlayer.volume = 0;
+            currentPlayBtn = btn;
+
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                const startTime = Math.min(10, audioPlayer.duration - 10);
+                audioPlayer.currentTime = startTime;
+                fadeIn();
+                audioPlayer.play();
+                
+                const playDuration = Math.min(10, audioPlayer.duration - startTime);
+                if (playTimeout) clearTimeout(playTimeout);
+                playTimeout = setTimeout(() => {
+                    fadeOutAndStop();
+                }, playDuration * 1000);
+            });
+
+            audioPlayer.addEventListener('ended', () => {
+                fadeOutAndStop();
+            });
+
+            audioPlayer.addEventListener('error', () => {
+                showToast('播放失败', 'error');
+                resetPlayBtn();
+            });
+
+            btn.classList.add('playing');
+            btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        }
+
+        function fadeIn() {
+            if (!audioPlayer) return;
+            let volume = 0;
+            const step = 0.05;
+            const fadeInterval = setInterval(() => {
+                if (!audioPlayer || audioPlayer.paused) {
+                    clearInterval(fadeInterval);
+                    return;
+                }
+                volume += step;
+                if (volume >= 1) {
+                    audioPlayer.volume = 1;
+                    clearInterval(fadeInterval);
+                } else {
+                    audioPlayer.volume = volume;
+                }
+            }, 50);
+        }
+
+        function fadeOutAndStop() {
+            if (!audioPlayer) return;
+            let volume = audioPlayer.volume;
+            const step = 0.05;
+            const fadeInterval = setInterval(() => {
+                volume -= step;
+                if (volume <= 0) {
+                    audioPlayer.volume = 0;
+                    audioPlayer.pause();
+                    audioPlayer = null;
+                    clearInterval(fadeInterval);
+                    resetPlayBtn();
+                } else {
+                    audioPlayer.volume = volume;
+                }
+            }, 50);
+        }
+
+        function resetPlayBtn() {
+            if (currentPlayBtn) {
+                currentPlayBtn.classList.remove('playing');
+                currentPlayBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                currentPlayBtn = null;
+            }
+            if (playTimeout) {
+                clearTimeout(playTimeout);
+                playTimeout = null;
+            }
+        }
+
+        window.deleteFile = async function(filename) {
+            const result = await Swal.fire({
+                title: '确认删除',
+                text: '删除音乐文件会导致直链失效，是否删除？',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f44336',
+                cancelButtonColor: '#333333',
+                confirmButtonText: '删除',
+                cancelButtonText: '取消',
+                background: '#252526',
+                color: '#cccccc'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/delete/${encodeURIComponent(filename)}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showToast('文件删除成功', 'success');
+                        loadFiles();
+                    } else {
+                        showToast(data.error || '删除失败', 'error');
+                    }
+                } catch (error) {
+                    showToast('删除失败', 'error');
+                }
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadFiles();
+    </script>
+</body>
+</html>
