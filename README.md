@@ -1,2 +1,4 @@
 # Etched-Bin
-Storage your music on server and get the link for Etched in Minecraft
+把音乐存在服务器上，试听和获取直链。任何人都可以上传和删除。
+
+做这个的初衷是玩Minecraft的Etched模组。网上的大多数直链平台都太垃圾了，
